@@ -2,15 +2,15 @@
 App::uses('Component', 'Controller', 'Session');
 
 class CurrencyConverterComponent extends Component {
-	var $controller = '';
+    var $controller = '';
     var $components = array('RequestHandler');
 
-	function initialize(Controller $controller, $settings = array()) { 
-        $this->controller =& $controller; 
-    } 
+    function initialize(Controller $controller, $settings = array()) {
+        $this->controller =& $controller;
+    }
 
     public function convert($from_currency, $to_currency, $amount, $save_into_db = 1, $hour_difference = 1) {
-    	if($from_currency != $to_currency){
+        if($from_currency != $to_currency){
             $rate = 0;
             $find = 0;
 
@@ -35,14 +35,14 @@ class CurrencyConverterComponent extends Component {
                         $rate = $this->getRates($from_currency, $to_currency);
 
                         $CurrencyConverter->id = $row['CurrencyConverter']['id'];
-						$CurrencyConverter->set(array(
-						    'from' => $from_currency,
-						    'to' => $to_currency,
-						    'rates' => $rate,
+                        $CurrencyConverter->set(array(
+                            'from' => $from_currency,
+                            'to' => $to_currency,
+                            'rates' => $rate,
                             'modified' => date('Y-m-d H:i:s'),
-						));
+                        ));
 
-						$CurrencyConverter->save();
+                        $CurrencyConverter->save();
                     }
                     else
                         $rate = $row['CurrencyConverter']['rates'];
@@ -52,15 +52,15 @@ class CurrencyConverterComponent extends Component {
                     $rate = $this->getRates($from_currency, $to_currency);
 
                     $CurrencyConverter->create();
-					$CurrencyConverter->set(array(
-					    'from' => $from_currency,
-					    'to' => $to_currency,
-					    'rates' => $rate,
-					    'created' => date('Y-m-d H:i:s'),
+                    $CurrencyConverter->set(array(
+                        'from' => $from_currency,
+                        'to' => $to_currency,
+                        'rates' => $rate,
+                        'created' => date('Y-m-d H:i:s'),
                         'modified' => date('Y-m-d H:i:s'),
-					));
+                    ));
 
-					$CurrencyConverter->save();
+                    $CurrencyConverter->save();
                 }
 
                 $value = (double)$rate*(double)$amount;
@@ -96,30 +96,30 @@ class CurrencyConverterComponent extends Component {
     }
 
     private function checkIfExistTable(){
-    	$find = 0;
-    	App::uses('ConnectionManager', 'Model');
-    	$db = ConnectionManager::getDataSource('default');
-		$tables = $db->listSources();
+        $find = 0;
+        App::uses('ConnectionManager', 'Model');
+        $db = ConnectionManager::getDataSource('default');
+        $tables = $db->listSources();
         
-		foreach($tables as $t){
-			if($t == 'currency_converters')
-				$find = 1;
-		}
+        foreach($tables as $t){
+            if($t == 'currency_converters')
+                $find = 1;
+        }
 
-		if($find == 0){
-			$sql = 'CREATE TABLE IF NOT EXISTS `currency_converters` (
-			  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-			  `from` varchar(5) NOT NULL,
-			  `to` varchar(5) NOT NULL,
-			  `rates` varchar(10) NOT NULL,
-			  `created` datetime NOT NULL,
-			  `modified` datetime NOT NULL,
-			  PRIMARY KEY (`id`)
-			) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;';
+        if($find == 0){
+            $sql = 'CREATE TABLE IF NOT EXISTS `currency_converters` (
+              `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+              `from` varchar(5) NOT NULL,
+              `to` varchar(5) NOT NULL,
+              `rates` varchar(10) NOT NULL,
+              `created` datetime NOT NULL,
+              `modified` datetime NOT NULL,
+              PRIMARY KEY (`id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;';
 
-			$results = $db->query($sql);
-		}
-		else
-			return(true);
+            $results = $db->query($sql);
+        }
+        else
+            return(true);
     }
 }
