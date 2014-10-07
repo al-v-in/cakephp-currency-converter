@@ -10,6 +10,8 @@ class CurrencyConverterComponent extends Component {
     }
 
     public function convert($from_currency, $to_currency, $amount, $save_into_db = 1, $hour_difference = 1) {
+        $convertedValue = 0;
+        
         if($from_currency != $to_currency){
             $rate = 0;
             $find = 0;
@@ -63,17 +65,17 @@ class CurrencyConverterComponent extends Component {
                     $CurrencyConverter->save();
                 }
 
-                $value = (double)$rate*(double)$amount;
-                return number_format((double)$value, 2, '.', '');
+                $convertedValue = (double)$rate*(double)$amount;
             }
             else{
                 $rate = $this->getRates($from_currency, $to_currency);
-                $value = (double)$rate*(double)$amount;
-                return number_format((double)$value, 2, '.', '');
+                $convertedValue = (double)$rate*(double)$amount;
             }
         }
         else
-            return number_format((double)$amount, 2, '.', '');
+            $convertedValue = $amount;
+        
+        return $convertedValue;
     }
 
     private function getRates($from_currency, $to_currency){
