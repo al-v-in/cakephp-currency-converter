@@ -9,77 +9,76 @@ class CurrencyConverterComponent extends Component {
         $this->controller =& $controller;
     }
 
-    public function convert($from_currency, $to_currency, $amount, $save_into_db = 1, $hour_difference = 1) {
-        $convertedValue = 0;
+    public function convert($fromCurrency, $toCurrency, $amount, $saveIntoDb = 1, $hourDifference = 1) {
+        $rate = $this->getRate($fromCurrency, $toCurrency, $saveIntoDb, $hourDifference);
+        return $rate * $amount;
+    }
+    
+    public function getRate($fromCurrency, $toCurrency, $saveIntoDb = 1, $hourDifference = 1) {
+        $rate = 0;
         
-        if($from_currency != $to_currency){
-            $rate = 0;
-            $find = 0;
-
-            if ($from_currency=="PDS")
-                $from_currency = "GBP";
+        if($fromCurrency != $toCurrency){
+            $isFound = false;
             
-            if($save_into_db == 1){
+            if ($fromCurrency=="PDS")
+                $fromCurrency = "GBP";
+            
+            if($saveIntoDb == 1){
                 $this->checkIfExistTable();
-
+                
                 $CurrencyConverter = ClassRegistry::init('CurrencyConverter');
-                $result = $CurrencyConverter->find('all', array('conditions' => array('from' => $from_currency, 'to' => $to_currency)));
-
+                $result = $CurrencyConverter->find('all', array('conditions' => array('from' => $fromCurrency, 'to' => $toCurrency)));
+                
                 foreach ($result as $row){
-                    $find = 1;
+                    $isFound = true;
                     $last_updated = $row['CurrencyConverter']['modified'];
                     $now = date('Y-m-d H:i:s');
                     $d_start = new DateTime($now);
                     $d_end = new DateTime($last_updated);
                     $diff = $d_start->diff($d_end);
-
-                    if(((int)$diff->y >= 1) || ((int)$diff->m >= 1) || ((int)$diff->d >= 1) || ((int)$diff->h >= $hour_difference) || ((double)$row['CurrencyConverter']['rates'] == 0)){
-                        $rate = $this->getRates($from_currency, $to_currency);
-
+                    
+                    if(((int)$diff->y >= 1) || ((int)$diff->m >= 1) || ((int)$diff->d >= 1) || ((int)$diff->h >= $hourDifference) || ((double)$row['CurrencyConverter']['rates'] == 0)){
+                        $rate = $this->getRemoteRate($fromCurrency, $toCurrency);
+                        
                         $CurrencyConverter->id = $row['CurrencyConverter']['id'];
                         $CurrencyConverter->set(array(
-                            'from' => $from_currency,
-                            'to' => $to_currency,
+                            'from' => $fromCurrency,
+                            'to' => $toCurrency,
                             'rates' => $rate,
                             'modified' => date('Y-m-d H:i:s'),
                         ));
-
+                        
                         $CurrencyConverter->save();
                     }
                     else
                         $rate = $row['CurrencyConverter']['rates'];
                 }
-
-                if($find == 0){
-                    $rate = $this->getRates($from_currency, $to_currency);
-
+                
+                if(!$isFound){
+                    $rate = $this->getRemoteRate($fromCurrency, $toCurrency);
+                    
                     $CurrencyConverter->create();
                     $CurrencyConverter->set(array(
-                        'from' => $from_currency,
-                        'to' => $to_currency,
+                        'from' => $fromCurrency,
+                        'to' => $toCurrency,
                         'rates' => $rate,
                         'created' => date('Y-m-d H:i:s'),
                         'modified' => date('Y-m-d H:i:s'),
                     ));
-
+                    
                     $CurrencyConverter->save();
                 }
-
-                $convertedValue = (double)$rate*(double)$amount;
             }
             else{
-                $rate = $this->getRates($from_currency, $to_currency);
-                $convertedValue = (double)$rate*(double)$amount;
+                $rate = $this->getRemoteRate($fromCurrency, $toCurrency);
             }
         }
-        else
-            $convertedValue = $amount;
-        
-        return $convertedValue;
+    
+        return $rate;
     }
-
-    private function getRates($from_currency, $to_currency){
-        $url = 'http://finance.yahoo.com/d/quotes.csv?e=.csv&f=sl1d1t1&s='. $from_currency . $to_currency .'=X';
+    
+    protected function getRemoteRate($fromCurrency, $toCurrency){
+        $url = 'http://finance.yahoo.com/d/quotes.csv?e=.csv&f=sl1d1t1&s='. $fromCurrency . $toCurrency .'=X';
         $handle = @fopen($url, 'r');
          
         if ($handle) {
