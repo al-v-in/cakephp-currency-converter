@@ -78,7 +78,7 @@ class CurrencyConverterComponent extends Component {
     }
     
     protected function getRemoteRate($fromCurrency, $toCurrency){
-        $url = 'http://finance.yahoo.com/d/quotes.csv?e=.csv&f=sl1d1t1&s='. $fromCurrency . $toCurrency .'=X';
+        $url = 'http://api.fixer.io/latest?base=' . $fromCurrency . '&symbols=' . $toCurrency;
         $handle = @fopen($url, 'r');
          
         if ($handle) {
@@ -87,8 +87,12 @@ class CurrencyConverterComponent extends Component {
         }
 
         if(isset($result)){
-            $allData = explode(',',$result);
-            $rate = $allData[1];
+            $conversion = json_decode($result, true);
+            if (isset($conversion['rates'][$toCurrency])) {
+                $rate = $conversion['rates'][$toCurrency];
+            }
+            else
+                $rate = 0;
         }
         else
             $rate = 0;
