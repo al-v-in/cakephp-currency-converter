@@ -78,7 +78,7 @@ class CurrencyConverterComponent extends Component {
     }
     
     protected function getRemoteRate($fromCurrency, $toCurrency){
-        $url = 'http://api.fixer.io/latest?base=' . $fromCurrency . '&symbols=' . $toCurrency;
+        $url = 'https://api.exchangeratesapi.io/latest?base=' . $fromCurrency . '&symbols=' . $toCurrency;
         $handle = @fopen($url, 'r');
          
         if ($handle) {
